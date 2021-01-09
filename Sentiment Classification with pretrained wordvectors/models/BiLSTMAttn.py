@@ -33,13 +33,8 @@ class BiLSTMAttn(nn.Module):
 
     def forward(self, x):
         emb = self.drop(self.encoder(x))  # (B, L) -> (B, L, D)
-        output, (hn, _) = self.rnn(emb)  # hn: (2, B, D)
-
+        output, (hn, _) = self.rnn(emb)
         attn_output, attn = self.attention(output, hn)
-
-        decoded = self.decoder(self.drop(attn_output))  # (B, 2 * D) -> (B, 2)
-
+        decoded = self.decoder(self.drop(attn_output))
         out = F.log_softmax(decoded, dim=-1)
-        # softmax -> (0, 1)   log(softmax) -> (-inf, 1)  NLLLoss() -> (0, 1)
-        # (B, 2): 2维分别相当于该样本为0的概率和该样本为1的概率
         return out

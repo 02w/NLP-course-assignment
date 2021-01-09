@@ -25,13 +25,11 @@ class BiLSTM(nn.Module):
 
     def forward(self, x):
         emb = self.drop(self.encoder(x))  # (B, L) -> (B, L, D)
-        _, (hn, _) = self.rnn(emb)  # hn: (2, B, D)
+        _, (hn, _) = self.rnn(emb)
         hn = self.drop(hn)
 
-        hn = torch.cat(torch.unbind(hn, dim=0), dim=1)  # (2, B, D) -> (B, 2 * D)
-        decoded = self.decoder(hn)  # (B, 2 * D) -> (B, 2)
+        hn = torch.cat(torch.unbind(hn, dim=0), dim=1)
+        decoded = self.decoder(hn)
 
         out = F.log_softmax(decoded, dim=-1)
-        # softmax -> (0, 1)   log(softmax) -> (-inf, 1)  NLLLoss() -> (0, 1)
-        # (B, 2): 2维分别相当于该样本为0的概率和该样本为1的概率
         return out

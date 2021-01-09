@@ -1,18 +1,19 @@
 import argparse
 import random
+
+import jieba
 import numpy as np
 import torch
 import torch.autograd
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score
-from models.CNN import TextCNN
-from models.BiLSTM import BiLSTM
-from models.BiLSTMAttn import BiLSTMAttn
 from torchtext.data import Field, TabularDataset, BucketIterator
 from torchtext.vocab import Vectors
-import jieba
+
+from models.BiLSTM import BiLSTM
+from models.BiLSTMAttn import BiLSTMAttn
+from models.CNN import TextCNN
 
 
 class Trainer(object):
@@ -88,15 +89,10 @@ if __name__ == '__main__':
     parser.add_argument('-save_path', type=str, default='./model.pkl')
     parser.add_argument('-model', type=str, default="bilstm_attn", help="[cnn, bilstm, bilstm_attn]")
 
-    # batch_size: [8, 16, 32, 64]
-    parser.add_argument('-batch_size', type=int, default=32)
-    # embedding_size: [64, 128, 256]
-    parser.add_argument('-embedding_size', type=int, default=64)
-    # hidden_size: [64, 128, 256]
-    parser.add_argument('-hidden_size', type=int, default=128)
-    # learning_rate: [1e-2, 5e-3, 1e-3, 5e-4, 1e-4]
+    parser.add_argument('-batch_size', type=int, default=16)
+    parser.add_argument('-embedding_size', type=int, default=300)
+    parser.add_argument('-hidden_size', type=int, default=64)
     parser.add_argument('-learning_rate', type=float, default=1e-4)
-    # dropout: [0.1, 0.2, 0.3, 0.4, 0.5]
     parser.add_argument('-dropout', type=float, default=0.5)
     parser.add_argument('-epochs', type=int, default=30)
 
@@ -127,14 +123,14 @@ if __name__ == '__main__':
     )
 
     # print(vars(train[0]))
-    zhihu = Vectors(name='gensim300.vector')
+    zhihu = Vectors(name='sgns.zhihu.word')
     REVIEW.build_vocab(train, vectors=zhihu)
     # U, S, V = torch.pca_lowrank(REVIEW.vocab.vectors, q=64)
     # vec = torch.matmul(REVIEW.vocab.vectors, V)
 
     train_iter, dev_iter, test_iter = BucketIterator.splits(
         datasets=(train, dev, test),
-        batch_size=32,
+        batch_size=args.batch_size,
         device='cuda',
         sort=False
     )
@@ -160,7 +156,7 @@ if __name__ == '__main__':
                            dropout=args.dropout,
                            pretrained_wordvector=REVIEW.vocab.vectors)
     else:
-        raise ValueError("Model should be either cnn or bilstm, {} is invalid.".format(args.model))
+        raise ValueError("Model should be cnn, bilstm or bilstm_attn, {} is invalid.".format(args.model))
 
     if torch.cuda.is_available():
         model = model.cuda()

@@ -1,7 +1,6 @@
-
 def collect_entities_bio(sent, tags):
 
-    append = lambda x, y, z: x.append('{}/{}'.format('_'.join(y), z[-1])) if len(y) != 0 else None
+    append = lambda x, y, z: x.append('{}/{}'.format('_'.join(y), z.split('-')[1])) if len(y) != 0 else None
 
     type2label = {0: 'B-Loc', 1: 'I-Loc', 2: 'B-Org', 3: 'I-Org', 4: 'B-Peop', 5: 'I-Peop', 6: 'B-Other', 7: 'I-Other',
                   8: 'O', 9: '<START>'}
@@ -14,7 +13,7 @@ def collect_entities_bio(sent, tags):
         # tag = vocab.id_to_tag(tag)
         tag = type2label[tag]
         if tag == 'O':
-            tag = 'o'
+            tag = 'O-O'
             if last_tag != tag:
                 append(entities, entity, last_tag)
                 entity = [word]
@@ -29,7 +28,7 @@ def collect_entities_bio(sent, tags):
                 entity = [word]
                 last_tag = tag
             else:
-                if cls == last_tag[-1] and (last_tag[0] == 'B' or last_tag[0] == 'I'):
+                if cls[-1] == last_tag[-1] and (last_tag[0] == 'B' or last_tag[0] == 'I'):
                     entity.append(word)
                     last_tag = tag
                 else:
